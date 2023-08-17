@@ -9,6 +9,8 @@ bot: Bot = Bot(token=API_TOKEN)
 dp: Dispatcher = Dispatcher()
 
 
+
+
 # отработает на отправку /start
 @dp.message(Command(commands=['start']))
 async def process_start_command(message: Message):

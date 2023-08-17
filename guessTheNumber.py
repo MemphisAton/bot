@@ -1,4 +1,5 @@
 import random
+import sqlite3
 
 from tkn import tkn
 
@@ -12,6 +13,7 @@ dp: Dispatcher = Dispatcher()
 
 ATTEMPTS: int = 5
 users: dict = {}
+
 
 
 # возврат случайного числа
@@ -28,12 +30,24 @@ async def process_start_command(message: Message):
     команд - отправьте команду /help''')
     # Если пользователь только запустил бота и его нет в словаре '
     # 'users - добавляем его в словарь
-    if message.from_user.id not in users:
-        users[message.from_user.id] = {'in_game': False,
-                                       'secret_number': None,
-                                       'attempts': None,
-                                       'total_games': 0,
-                                       'wins': 0}
+    conn = sqlite3.connect('gameGN.db')
+    cur = conn.cursor()
+    cur.execute(f'''CREATE TABLE IF NOT EXISTS users (
+                user int DEFAULT {message.from_user.id}, 
+                in_game BOOLEAN DEFAULT FALSE,
+                secret_number INT DEFAULT None,
+                total_games INT DEFAULT 0,
+                win INT DEFAULT 0
+                )''')
+    tabl = list(cur.execute('SELECT user FROM users'))
+    tabl = [item[0] for item in tabl]
+
+    if message.from_user.id not in tabl:
+        cur.execute(f'INSERT INTO users(user) VALUES({message.from_user.id})')
+    conn.commit()
+    cur.close()
+    conn.close()
+    print(tabl)
 
 
 # Этот хэндлер будет срабатывать на команду "/help"
@@ -53,6 +67,7 @@ async def process_help_command(message: Message):
 # Этот хэндлер будет срабатывать на команду "/stat"
 @dp.message(Command(commands=['stat']))
 async def process_stat_command(message: Message):
+
     await message.answer(f'''Всего игр сыграно:
                         {users[message.from_user.id]["total_games"]}
                         Игр выиграно: 
